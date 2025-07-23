@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36221.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "dll_bin_to_wav", "dll_bin_to_wav\dll_bin_to_wav.vcxproj", "{09C96CEF-B075-4769-A3B6-71A2FB8E9440}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|ARM = Debug|ARM
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|ARM = Release|ARM
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{09C96CEF-B075-4769-A3B6-71A2FB8E9440}.Debug|ARM.ActiveCfg = Debug|x64
+		{09C96CEF-B075-4769-A3B6-71A2FB8E9440}.Debug|ARM.Build.0 = Debug|x64
+		{09C96CEF-B075-4769-A3B6-71A2FB8E9440}.Debug|x64.ActiveCfg = Debug|x64
+		{09C96CEF-B075-4769-A3B6-71A2FB8E9440}.Debug|x64.Build.0 = Debug|x64
+		{09C96CEF-B075-4769-A3B6-71A2FB8E9440}.Debug|x86.ActiveCfg = Debug|Win32
+		{09C96CEF-B075-4769-A3B6-71A2FB8E9440}.Debug|x86.Build.0 = Debug|Win32
+		{09C96CEF-B075-4769-A3B6-71A2FB8E9440}.Release|ARM.ActiveCfg = Release|ARM
+		{09C96CEF-B075-4769-A3B6-71A2FB8E9440}.Release|ARM.Build.0 = Release|ARM
+		{09C96CEF-B075-4769-A3B6-71A2FB8E9440}.Release|x64.ActiveCfg = Release|x64
+		{09C96CEF-B075-4769-A3B6-71A2FB8E9440}.Release|x64.Build.0 = Release|x64
+		{09C96CEF-B075-4769-A3B6-71A2FB8E9440}.Release|x86.ActiveCfg = Release|Win32
+		{09C96CEF-B075-4769-A3B6-71A2FB8E9440}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {41C72041-5F2A-4563-88D6-5C67DD24B027}
+	EndGlobalSection
+EndGlobal
