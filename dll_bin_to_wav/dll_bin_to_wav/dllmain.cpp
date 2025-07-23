@@ -1,93 +1,100 @@
-﻿#include "pch.h"
+﻿#include <windows.h>
 #include <fstream>
 #include <cstdint>
-#define BUILD_DLL
-#include "bin_to_wav.h"
 #include <vector>
-#pragma pack(push, 1) // boşluk bytları kullanma der, 1 byte hizalama kullanır. WAV dosyası tam byte hizalaması ister.
+#include "bin_to_wav.h"
 
+#pragma pack(push, 1)
 struct WAVHeader {
-    char riff[4] = { 'R', 'I', 'F', 'F' };          // dosya türü 'RIFF' ile başlar.
-    uint32_t chunkSize;                      // dosyanın toplam boyutu - 8 byte
-    char wave[4] = { 'W', 'A', 'V', 'E' };      // ses dosyasının türünü söyler.
-    char fmt[4] = { 'f', 'm', 't', ' ' };       // format bloğu başlığı
-    uint32_t subchunk1Size = 16;           // format bloğu boyutu (PCM için 16 byte)
-    uint16_t audioFormat = 1;            // PCM (sıkıştırmasız)
+    char riff[4] = { 'R', 'I', 'F', 'F' };
+    uint32_t chunkSize;
+    char wave[4] = { 'W', 'A', 'V', 'E' };
+    char fmt[4] = { 'f', 'm', 't', ' ' };
+    uint32_t subchunk1Size = 16;
+    uint16_t audioFormat = 1;
     uint16_t numChannels;
     uint32_t sampleRate;
     uint32_t byteRate;
     uint16_t blockAlign;
     uint16_t bitsPerSample;
-    char data[4] = { 'd', 'a', 't', 'a' };   // veri bloğu başlığı
-    uint32_t subchunk2Size;                  // veri boyutu 
+    char data[4] = { 'd', 'a', 't', 'a' };
+    uint32_t subchunk2Size;
 };
-#pragma pack(pop) // işlemler bittikten sonra eski hizalama ayarlarına geri döndürür
+#pragma pack(pop)
 
 int ConvertBinToWavSimple(
     const char* binPath,
     const char* wavPath,
-    uint16_t numChannels,    // sesin kaç kanalı var (1 mono, 2 stereo)
-    uint32_t sampleRate,     // saniyedeki örnek sayısı ( 1 saniyede kaç ses örneği alınacağı)
-    uint16_t bitsPerSample,  // her bir örneğin kaç bit olduğu
-    uint32_t durationSeconds, // 0 gelirse tam dosya kabul edilecek
-    bool isFromEnd)
+    uint16_t numChannels,
+    uint32_t sampleRate,
+    uint16_t bitsPerSample,
+    uint32_t durationSeconds)
 {
-    uint32_t bytePerSample = bitsPerSample / 8;  // her ses örneğinin kaç byte olduğunu hesaplar
-    uint32_t byteRate = sampleRate * numChannels * bytePerSample; //1 saniyelik ses verisinin kaç byte tuttuğunu hesaplar.
+    uint32_t bytePerSample = bitsPerSample / 8;
+    uint32_t byteRate = sampleRate * numChannels * bytePerSample;
 
-    std::ifstream in(binPath, std::ios::binary | std::ios::ate);
+    // binPath dosyası açılır, HANDLE Windows un dosya tanıtıcısıdır.
+	HANDLE hFile = CreateFileA(binPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL); // dosyada sadece okuma,başka bir işlem aynı anda bu dposyayı okuyabilir,güvenlik öznitelikleri kullanılmaz,dosya varsa aç yoksa hata ver, standart dosya öznitelikleri kullanılır, yeni bir dosya oluştururken şablon dosya kullanılabilir kısmı null. 
+	if (hFile == INVALID_HANDLE_VALUE) // dosya bulunmazsa veya açılamazsa INVALID_HANDLE_VALUE döner.
+        return 1;
 
-
-    uint64_t totalSize = static_cast<uint64_t>(in.tellg()); // dosyanın toplam boyutunu alır
-
-    // Eğer durationSeconds 0 ise tüm dosya kullanılacak şekilde ayarla
-    uint64_t dataSize;
-    if (durationSeconds == 0) {
-        dataSize = totalSize;
-    }
-    else {
-        dataSize = static_cast<uint64_t>(durationSeconds) * byteRate; // istenen süreyi byte cinsine çevirir
-        if (dataSize > totalSize) return 3; // istenen süre dosyadan uzun olamaz
+	LARGE_INTEGER fileSizeLI;  // 64 bitlik tam sayısal değer tutar, dosyanın boyutunu tutmak için kullanılır.
+	if (!GetFileSizeEx(hFile, &fileSizeLI)) { // hFile ile belirtilen dosyanın boyutunu öğrenmeye çalışır, başarılı olursa, dosya boyutu fileSizeLI.QuadPart içinde saklanır.
+        CloseHandle(hFile);
+        return 2;
     }
 
-    uint64_t startByte;
-    if (isFromEnd) {
-        if (dataSize > totalSize) return 3;
-        startByte = totalSize - dataSize;
-    }
-    else {
-        startByte = 0;
+    uint64_t totalSize = static_cast<uint64_t>(fileSizeLI.QuadPart); // dosyanın toplam boyutunu güvenli bir şekilde işaretsiz bir değişkene dönüştürerek saklar.
+    uint64_t dataSize = (durationSeconds == 0) ? totalSize : static_cast<uint64_t>(durationSeconds) * byteRate;
+    if (dataSize > totalSize) {
+        CloseHandle(hFile);
+        return 3;
     }
 
-    in.seekg(startByte, std::ios::beg); // dosyanın başından istenilen byte konumuna getirilir.
+    // Memory-mapping oluşturma
+	HANDLE hMap = CreateFileMappingA(hFile, NULL, PAGE_READONLY, 0, 0, NULL); // dosyayı okuma amaçlı haritalamak için, dosyanın içeriğini bellekte bir adres aralığına eşlemeye olanak tanır. güvenlik öznitelikleri null, bellek eşlemesi yalnızca okuma için, 0 0 ile dosyanın tamamı eşlenir, isimli bir eşleme oluşturulmaz.
+    if (!hMap) {
+        CloseHandle(hFile);
+        return 4;
+    }
 
+    // Başlangıçtan dataSize kadar alanı haritala
+	BYTE* fileData = (BYTE*)MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0); // dosyanın içeriğini bellekteki bir adrese eşler, bu adresi fileData değişkenine atar. FILE_MAP_READ ile dosya okuma amaçlı haritalanır, 0 0 ile dosyanın başlangıcından itibaren eşleme yapılır, 0 ile dosyanın tamamı eşlenir.
+    if (!fileData) {
+        CloseHandle(hMap);
+        CloseHandle(hFile);
+        return 5;
+    }
+
+    // WAV header yaz
     WAVHeader header;
     header.numChannels = numChannels;
     header.sampleRate = sampleRate;
     header.bitsPerSample = bitsPerSample;
-    header.subchunk2Size = static_cast<uint32_t>(dataSize);
     header.byteRate = byteRate;
     header.blockAlign = numChannels * bytePerSample;
+    header.subchunk2Size = static_cast<uint32_t>(dataSize);
     header.chunkSize = 36 + header.subchunk2Size;
 
     std::ofstream out(wavPath, std::ios::binary);
-    in.rdbuf()->pubsetbuf(nullptr, 0);
-
-    out.write(reinterpret_cast<char*>(&header), sizeof(WAVHeader)); // header isimli yapının bellekteki ham halini dosyaya yazar.
-
-    const size_t bufferSize = 4 * 1024 * 1024; // dosyayı küçük parçalar halinde okuma ve yazma için buffer boyutu 256 KB
-    std::vector<uint8_t> buffer(bufferSize);// okunan veriyi geçici olarak tutacak bir bellek alanı (buffer) oluşturur.
-    uint64_t remaining = dataSize; // daha kaç byte lık veri okunması gerektiğini tutar.
-    while (remaining > 0) {            // veri kalmayana kadar belli miktar veri okur ve kalan veri miktarı azaltılır.
-        size_t toRead = static_cast<size_t>(std::min<uint64_t>(bufferSize, remaining)); // kalan veri miktarıyla bellek kapasitesi arasından küçük olanu seç ve toread değişkenine ata
-        in.read(reinterpret_cast<char*>(buffer.data()), toRead); // dosadan toRead kadar veri okur ve buffer a yazar.
-        out.write(reinterpret_cast<char*>(buffer.data()), toRead);
-
-        remaining -= toRead;
+    if (!out) {
+        UnmapViewOfFile(fileData);
+        CloseHandle(hMap);
+        CloseHandle(hFile);
+        return 6;
     }
 
-    in.close();
+    out.write(reinterpret_cast<const char*>(&header), sizeof(WAVHeader));
+
+    // Haritalanan veriden sadece gereken kısmı yaz
+    out.write(reinterpret_cast<const char*>(fileData), static_cast<std::streamsize>(dataSize));
+
     out.close();
+
+    // Belleği ve tanıtıcıları serbest bırak
+    UnmapViewOfFile(fileData);
+    CloseHandle(hMap);
+    CloseHandle(hFile);
 
     return 0;
 }

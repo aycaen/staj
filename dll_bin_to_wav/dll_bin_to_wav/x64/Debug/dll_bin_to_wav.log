@@ -1,5 +1,8 @@
 ﻿  dllmain.cpp
-     C:\Users\LENOVO\OneDrive - Yildiz Technical University\Desktop\dll_bin_to_wav\x64\Debug\dll_bin_to_wav.lib kitaplığı ve C:\Users\LENOVO\OneDrive - Yildiz Technical University\Desktop\dll_bin_to_wav\x64\Debug\dll_bin_to_wav.exp nesnesi oluşturuluyor
+C:\Users\LENOVO\OneDrive - Yildiz Technical University\Desktop\dll_bin_to_wav\dll_bin_to_wav\dllmain.cpp(25,5): warning C4273: 'ConvertBinToWavSimple': tutarsız dll bağlantısı
+      C:\Users\LENOVO\OneDrive - Yildiz Technical University\Desktop\dll_bin_to_wav\dll_bin_to_wav\bin_to_wav.h(9,17):
+      önceki 'ConvertBinToWavSimple' tanımına bakın
+  
   dll_bin_to_wav.vcxproj -> C:\Users\LENOVO\OneDrive - Yildiz Technical University\Desktop\dll_bin_to_wav\x64\Debug\dll_bin_to_wav.dll
   'pwsh.exe' is not recognized as an internal or external command,
   operable program or batch file.

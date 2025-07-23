@@ -12,6 +12,5 @@ extern "C" {                                             // dll deki dosyanýn im
         uint16_t numChannels,
         uint32_t sampleRate,
         uint16_t bitsPerSample,
-        uint32_t durationSeconds,
-        bool isFromEnd);
+        uint32_t durationSeconds);
 }
