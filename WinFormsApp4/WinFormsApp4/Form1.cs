@@ -110,7 +110,7 @@ namespace WinFormsApp4
 
             string wavPath = Path.Combine(outputDir, secim.Replace(" ", "_") + ".wav");
 
-            var request = new
+            var request = new ZmqRequest
             {
                 binPath = binPath,
                 outputFolder = outputDir,
@@ -118,7 +118,6 @@ namespace WinFormsApp4
                 sampleRate = 44100,
                 bitsPerSample = 8,
                 durationSec = durationSec,
-                isFromEnd = false
             };
             string json = JsonConvert.SerializeObject(request);
 
